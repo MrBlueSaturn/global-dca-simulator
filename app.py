@@ -5,259 +5,235 @@ import numpy as np
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
-# ---------------------------------------------------------
-# 1. Page Configuration
-# ---------------------------------------------------------
-st.set_page_config(page_title="Ultimate Global DCA Simulator", page_icon="🌍", layout="wide")
+# ==========================================
+# 1. Page Config & Custom CSS (UI Upgrade)
+# ==========================================
+st.set_page_config(page_title="Pro Portfolio & DCA Simulator", page_icon="🏦", layout="wide")
 
-# ---------------------------------------------------------
-# 2. Huge Asset Dictionary (100+ Assets)
-# ---------------------------------------------------------
-assets_db = {
-    "🇺🇸 US Market ETFs": {
-        "S&P 500 ETF (VOO)": "VOO", "SPDR S&P 500 (SPY)": "SPY", "NASDAQ 100 (QQQ)": "QQQ",
-        "Total Stock Market (VTI)": "VTI", "Dividend Equity (SCHD)": "SCHD", "Dow Jones (DIA)": "DIA",
-        "Russell 2000 (IWM)": "IWM", "Vanguard Growth (VUG)": "VUG", "Vanguard Value (VTV)": "VTV"
-    },
-    "🌍 Global & Regional ETFs": {
-        "Total World Stock (VT)": "VT", "Total Intl Stock (VXUS)": "VXUS", 
-        "Emerging Markets (VWO)": "VWO", "Developed Markets (VEA)": "VEA",
-        "Japan ETF (EWJ)": "EWJ", "China ETF (MCHI)": "MCHI", "India ETF (INDA)": "INDA",
-        "Europe ETF (VGK)": "VGK", "UK ETF (EWU)": "EWU", "Germany ETF (EWG)": "EWG"
-    },
-    "🇯🇵 Japan Top Stocks": {
-        "Nikkei 225 Index": "^N225", "Toyota Motor": "7203.T", "Sony Group": "6758.T",
-        "Mitsubishi UFJ": "8306.T", "Keyence": "6861.T", "Tokyo Electron": "8035.T",
-        "SoftBank Group": "9984.T", "Nintendo": "7974.T", "Honda Motor": "7267.T",
-        "Hitachi": "6501.T", "Shin-Etsu Chemical": "4063.T", "Takeda Pharma": "4502.T",
-        "Itochu": "8001.T", "Mitsui & Co": "8031.T", "Fast Retailing (Uniqlo)": "9983.T"
-    },
-    "🇺🇸 US Tech & Mag 7": {
-        "Apple (AAPL)": "AAPL", "Microsoft (MSFT)": "MSFT", "Alphabet (GOOGL)": "GOOGL",
-        "Amazon (AMZN)": "AMZN", "NVIDIA (NVDA)": "NVDA", "Meta (META)": "META",
-        "Tesla (TSLA)": "TSLA", "Netflix (NFLX)": "NFLX", "AMD (AMD)": "AMD",
-        "Intel (INTC)": "INTC", "Broadcom (AVGO)": "AVGO", "Qualcomm (QCOM)": "QCOM",
-        "Salesforce (CRM)": "CRM", "Adobe (ADBE)": "ADBE", "Cisco (CSCO)": "CSCO"
-    },
-    "🇺🇸 US Finance & Health": {
-        "JPMorgan Chase (JPM)": "JPM", "Visa (V)": "V", "Mastercard (MA)": "MA",
-        "Bank of America (BAC)": "BAC", "Berkshire Hathaway (BRK-B)": "BRK-B",
-        "UnitedHealth (UNH)": "UNH", "Johnson & Johnson (JNJ)": "JNJ",
-        "Eli Lilly (LLY)": "LLY", "Pfizer (PFE)": "PFE", "AbbVie (ABBV)": "ABBV"
-    },
-    "🇹🇭 Thai Stocks (SET50)": {
-        "SET Index": "^SET.BK", "PTT (PTT.BK)": "PTT.BK", "AOT (AOT.BK)": "AOT.BK",
-        "CPALL (CPALL.BK)": "CPALL.BK", "ADVANC (ADVANC.BK)": "ADVANC.BK",
-        "SCC (SCC.BK)": "SCC.BK", "BDMS (BDMS.BK)": "BDMS.BK", "GULF (GULF.BK)": "GULF.BK",
-        "PTTEP (PTTEP.BK)": "PTTEP.BK", "KBANK (KBANK.BK)": "KBANK.BK",
-        "SCB (SCB.BK)": "SCB.BK", "BBL (BBL.BK)": "BBL.BK", "EA (EA.BK)": "EA.BK",
-        "MINT (MINT.BK)": "MINT.BK", "CRC (CRC.BK)": "CRC.BK"
-    },
-    "🟡 Commodities & Crypto": {
-        "Gold Trust (GLD)": "GLD", "Silver Trust (SLV)": "SLV", "US Oil Fund (USO)": "USO",
-        "Bitcoin (BTC-USD)": "BTC-USD", "Ethereum (ETH-USD)": "ETH-USD",
-        "Solana (SOL-USD)": "SOL-USD", "Binance Coin (BNB-USD)": "BNB-USD",
-        "Ripple (XRP-USD)": "XRP-USD", "Cardano (ADA-USD)": "ADA-USD",
-        "Dogecoin (DOGE-USD)": "DOGE-USD", "Chainlink (LINK-USD)": "LINK-USD"
+# ใส่ CSS ตกแต่งให้ดูเป็นแอปการเงินระดับพรีเมียม
+st.markdown("""
+<style>
+    .metric-card {
+        background-color: #1E1E1E;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 5px solid #00B4D8;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
     }
+    .metric-title { color: #A0AEC0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;}
+    .metric-value { color: #FFFFFF; font-size: 28px; font-weight: bold; margin-top: 5px;}
+    .green-text { color: #00FF7F !important; }
+    .red-text { color: #FF4500 !important; }
+</style>
+""", unsafe_allow_html=True)
+
+# ==========================================
+# 2. Asset Database & Localization
+# ==========================================
+lang = st.sidebar.radio("🌐 Language", ["ไทย", "English"])
+
+# Dictionary หุ้นยอดฮิต (ลดความยาวโค้ดลงมาให้แสดงผลได้เร็วขึ้น แต่ครอบคลุม)
+assets_db = {
+    "🇺🇸 S&P 500 (VOO)": "VOO", "🇺🇸 NASDAQ 100 (QQQ)": "QQQ", "🌍 All-World (VT)": "VT",
+    "🇯🇵 Nikkei 225 (^N225)": "^N225", "🇯🇵 Toyota (7203.T)": "7203.T", "🇯🇵 Sony (6758.T)": "6758.T",
+    "🍎 Apple (AAPL)": "AAPL", "🤖 NVIDIA (NVDA)": "NVDA", "🇹🇭 SET50 (^SET50.BK)": "^SET50.BK",
+    "🟡 Gold (GLD)": "GLD", "🪙 Bitcoin (BTC-USD)": "BTC-USD"
 }
 
-# สร้าง List ของสินทรัพย์ทั้งหมด
-all_assets_flat = {}
-for category, assets in assets_db.items():
-    for name, ticker in assets.items():
-        all_assets_flat[f"{category.split(' ')[0]} {name}"] = ticker
-
-# ---------------------------------------------------------
-# 3. UI & Sidebar
-# ---------------------------------------------------------
-st.title("🌍 Ultimate Global Assets: Advanced DCA Simulator")
-st.markdown("โปรแกรมจำลองผลตอบแทนการลงทุนระยะยาวแบบถัวเฉลี่ย (DCA) คลังข้อมูลหุ้น 100+ ตัวทั่วโลก (คำนวณกำไร/ขาดทุนแบบแม่นยำสูงด้วยข้อมูลรายวันแบบ Resample)")
-
-st.sidebar.header("⚙️ การตั้งค่าพอร์ตลงทุน")
-monthly_invest = st.sidebar.number_input("เงินลงทุนรายเดือน (บาท)", min_value=1, value=5000, step=1000)
-years = st.sidebar.slider("ระยะเวลาลงทุนย้อนหลัง (ปี)", min_value=1, max_value=20, value=5)
+# ==========================================
+# 3. Sidebar UI
+# ==========================================
+st.sidebar.markdown("---")
+monthly_invest = st.sidebar.number_input("💵 เงินลงทุนรายเดือน (บาท)" if lang=="ไทย" else "Monthly Investment", min_value=1000, value=5000, step=1000)
+years = st.sidebar.slider("📅 ดูข้อมูลย้อนหลัง (ปี)" if lang=="ไทย" else "Historical Years", 1, 20, 5)
 
 st.sidebar.markdown("---")
-st.sidebar.subheader("🔍 เลือกสินทรัพย์")
-
 selected_assets = st.sidebar.multiselect(
-    "พิมพ์ค้นหาหรือเลือกหุ้น/ETF/Crypto (เลือกได้หลายตัว)",
-    options=list(all_assets_flat.keys()),
-    default=["🇺🇸 S&P 500 ETF (VOO)", "🇯🇵 Nikkei 225 Index"]
+    "🔍 เลือกสินทรัพย์เปรียบเทียบ" if lang=="ไทย" else "Select Assets",
+    options=list(assets_db.keys()),
+    default=["🇺🇸 S&P 500 (VOO)", "🪙 Bitcoin (BTC-USD)"]
 )
 
-# ---------------------------------------------------------
-# 4. Core Logic & Data Fetching (FIXED & HIGH PRECISION)
-# ---------------------------------------------------------
+# ==========================================
+# 4. Main App Header
+# ==========================================
+st.title("🏦 Pro Portfolio Strategy & DCA Simulator")
+st.markdown("แพลตฟอร์มวิเคราะห์การลงทุนระดับ Enterprise พร้อมระบบคาดการณ์อนาคตด้วย Monte Carlo Simulation" if lang=="ไทย" else "Enterprise-grade investment analysis platform with Monte Carlo future projections.")
+
+# ==========================================
+# 5. Core Logic (Data Fetching & Finance Math)
+# ==========================================
 end_date = datetime.today()
 start_date = end_date - timedelta(days=years * 365)
 
 @st.cache_data(ttl=3600)
-def fetch_and_process_data(ticker, start, end):
+def fetch_data(ticker):
     try:
-        # ดึงข้อมูล "รายวัน" เพื่อความแม่นยำสูงสุด แล้วค่อยจับกลุ่มหา "วันทำการสุดท้ายของเดือน"
-        data = yf.download(ticker, start=start, end=end, interval="1d", progress=False)
-        
-        if data.empty:
-            return None
-            
-        # จัดการโครงสร้างคอลัมน์ของ yfinance เวอร์ชั่นใหม่
+        data = yf.download(ticker, start=start_date, end=end_date, interval="1d", progress=False)
+        if data.empty: return None
         if isinstance(data.columns, pd.MultiIndex):
-            close_prices = data['Close'].iloc[:, 0]
-        else:
-            close_prices = data['Close']
-            
-        # จับกลุ่มข้อมูลเป็นรายเดือน (ME = Month End) และเลือกราคาปิดวันสุดท้ายของเดือนนั้นๆ
-        monthly_data = close_prices.resample('ME').last().dropna().to_frame(name='Price')
-        return monthly_data
-    except Exception as e:
+            return data['Close'].iloc[:, 0].resample('ME').last()
+        return data['Close'].resample('ME').last()
+    except:
         return None
 
-# ---------------------------------------------------------
-# 5. Dashboard Rendering
-# ---------------------------------------------------------
 if selected_assets:
-    tab1, tab2 = st.tabs(["📈 แดชบอร์ดและกราฟวิเคราะห์", "📝 ข้อมูลดิบสำหรับ Excel (CSV)"])
+    # สร้าง Tabs โมเดิร์นๆ
+    tab_hist, tab_metrics, tab_future, tab_data = st.tabs([
+        "📈 การเติบโตในอดีต (Historical)", 
+        "🧠 วิเคราะห์เชิงลึก (Advanced Metrics)", 
+        "🔮 พยากรณ์อนาคต (Monte Carlo)", 
+        "💾 ดาวน์โหลดข้อมูล (Data)"
+    ])
     
-    with st.spinner("กำลังเชื่อมต่อเซิร์ฟเวอร์ Yahoo Finance และคำนวณข้อมูลระดับ High-Precision..."):
-        fig = go.Figure()
-        results_data = []
-        raw_data_dict = {}
+    with st.spinner("Analyzing market data..." if lang=="English" else "กำลังประมวลผลข้อมูลตลาดระดับลึก..."):
+        fig_hist = go.Figure()
+        results = []
+        raw_dict = {}
+        baseline_x, baseline_y = None, None
         
-        baseline_x = None
-        baseline_y = None
-        max_months = 0
+        # Risk-free rate สมมติที่ 3% ต่อปี สำหรับคำนวณ Sharpe Ratio
+        risk_free_rate = 0.03 
 
         for asset in selected_assets:
-            ticker_symbol = all_assets_flat[asset]
-            df = fetch_and_process_data(ticker_symbol, start_date, end_date)
+            prices = fetch_data(assets_db[asset])
             
-            if df is not None and not df.empty:
-                # --- NEW HIGH-PRECISION PNL MATH ---
-                # 1. บันทึกจำนวนเงินที่ลงทุนจริงในแต่ละเดือน
-                df['Invested_This_Month'] = monthly_invest
+            if prices is not None:
+                df = prices.dropna().to_frame(name='Price')
                 
-                # 2. คำนวณจำนวนหน่วย (Shares) ที่ซื้อได้ในเดือนนั้น
-                df['Shares_Bought'] = df['Invested_This_Month'] / df['Price']
+                # --- Basic DCA Math ---
+                df['Shares'] = monthly_invest / df['Price']
+                df['Total_Shares'] = df['Shares'].cumsum()
+                df['Invested'] = [monthly_invest * i for i in range(1, len(df) + 1)]
+                df['Value'] = df['Total_Shares'] * df['Price']
                 
-                # 3. รวมจำนวนหน่วยสะสม
-                df['Total_Shares'] = df['Shares_Bought'].cumsum()
+                raw_dict[asset] = df['Value']
                 
-                # 4. รวมเงินต้นสะสม (คำนวณตามจำนวนเดือนที่มีข้อมูลจริง)
-                df['Total_Invested'] = df['Invested_This_Month'].cumsum()
+                # เก็บเส้นเงินต้น
+                if baseline_x is None or len(df) > len(baseline_x):
+                    baseline_x, baseline_y = df.index, df['Invested']
                 
-                # 5. คำนวณมูลค่าพอร์ต (จำนวนหน่วยสะสม * ราคาปัจจุบันของเดือนนั้น)
-                df['Portfolio_Value'] = df['Total_Shares'] * df['Price']
+                fig_hist.add_trace(go.Scatter(x=df.index, y=df['Value'], mode='lines', name=asset, hovertemplate="<b>%{x|%b %Y}</b><br>Value: ฿%{y:,.0f}<extra></extra>"))
                 
-                # 6. วิเคราะห์ความเสี่ยง Maximum Drawdown
-                df['Peak'] = df['Portfolio_Value'].cummax()
-                df['Drawdown'] = (df['Portfolio_Value'] - df['Peak']) / df['Peak']
-                max_drawdown = df['Drawdown'].min() * 100
+                # --- Advanced Finance Math ---
+                final_val = df['Value'].iloc[-1]
+                total_inv = df['Invested'].iloc[-1]
+                profit = final_val - total_inv
+                roi = (profit / total_inv) * 100
                 
-                # จัดเก็บข้อมูลสำหรับ Export
-                raw_data_dict[f"{asset} Value"] = df['Portfolio_Value']
+                # 1. CAGR (Compound Annual Growth Rate)
+                years_actual = len(df) / 12
+                cagr = ((final_val / total_inv) ** (1 / years_actual) - 1) * 100 if years_actual > 0 else 0
                 
-                # วาดเส้นกราฟมูลค่าพอร์ต
-                fig.add_trace(go.Scatter(
-                    x=df.index, y=df['Portfolio_Value'], 
-                    mode='lines', name=asset,
-                    hovertemplate="%{x|%b %Y}<br>มูลค่า: ฿%{y:,.0f}<extra></extra>"
-                ))
+                # 2. Monthly Returns & Annualized Volatility
+                df['Return'] = df['Value'].pct_change()
+                volatility = df['Return'].std() * np.sqrt(12) * 100 # Annualized
                 
-                # เก็บเส้นอ้างอิงเงินต้น (เลือกตัวที่มีข้อมูลยาวที่สุด)
-                if len(df) > max_months:
-                    max_months = len(df)
-                    baseline_x = df.index
-                    baseline_y = df['Total_Invested']
+                # 3. Sharpe Ratio (ผลตอบแทนเทียบกับความเสี่ยง)
+                annual_return = df['Return'].mean() * 12
+                sharpe = (annual_return - risk_free_rate) / (df['Return'].std() * np.sqrt(12)) if df['Return'].std() > 0 else 0
                 
-                # จัดเตรียมข้อมูลลงตารางสรุป
-                final_value = df['Portfolio_Value'].iloc[-1]
-                total_invested = df['Total_Invested'].iloc[-1]
-                profit = final_value - total_invested
-                profit_pct = (profit / total_invested) * 100 if total_invested > 0 else 0
+                # 4. Max Drawdown
+                df['Peak'] = df['Value'].cummax()
+                mdd = ((df['Value'] - df['Peak']) / df['Peak']).min() * 100
                 
-                results_data.append({
-                    "สินทรัพย์": asset,
-                    "เดือนที่ลงทุนจริง": len(df),
-                    "เงินต้นสะสม": total_invested,
-                    "มูลค่าพอร์ตปัจจุบัน": final_value,
-                    "กำไร/ขาดทุนสุทธิ": profit,
-                    "ผลตอบแทน (%)": profit_pct,
-                    "Max Drawdown": max_drawdown
+                results.append({
+                    "Asset": asset, "Invested": total_inv, "Value": final_val, 
+                    "ROI (%)": roi, "CAGR (%)": cagr, "Volatility (%)": volatility, 
+                    "Sharpe Ratio": sharpe, "Max Drawdown (%)": mdd
                 })
-
-        # --- Tab 1: Render Charts and Tables ---
-        with tab1:
-            if results_data:
-                # วาดเส้นเงินต้นสะสม
-                if baseline_x is not None:
-                    fig.add_trace(go.Scatter(
-                        x=baseline_x, y=baseline_y, 
-                        mode='lines', name='เงินต้นสะสม (Total Cash)', 
-                        line=dict(color='#A0AEC0', width=2, dash='dash'),
-                        hovertemplate="%{x|%b %Y}<br>เงินต้น: ฿%{y:,.0f}<extra></extra>"
-                    ))
-                
-                # ปรับแต่งกราฟ
-                fig.update_layout(
-                    title=f"การเติบโตของพอร์ตลงทุนย้อนหลัง {years} ปี (เปรียบเทียบตามจริง)",
-                    xaxis_title="เวลา",
-                    yaxis_title="มูลค่า (บาท)",
-                    template="plotly_dark",
-                    hovermode="x unified",
-                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-                )
-                st.plotly_chart(fig, use_container_width=True)
-
-                # ตารางสรุปผล
-                st.subheader("📊 สรุปผลตอบแทนและความเสี่ยง (Performance Matrix)")
-                summary_df = pd.DataFrame(results_data)
-                
-                # ฟอร์แมตตารางให้สวยงาม
-                formatted_df = summary_df.copy()
-                formatted_df["เงินต้นสะสม"] = formatted_df["เงินต้นสะสม"].apply(lambda x: f"฿ {x:,.0f}")
-                formatted_df["มูลค่าพอร์ตปัจจุบัน"] = formatted_df["มูลค่าพอร์ตปัจจุบัน"].apply(lambda x: f"฿ {x:,.0f}")
-                
-                # ทำสีให้ตัวเลขกำไร/ขาดทุน
-                formatted_df["กำไร/ขาดทุนสุทธิ"] = formatted_df["กำไร/ขาดทุนสุทธิ"].apply(
-                    lambda x: f"🟢 ฿ {x:,.0f}" if x > 0 else f"🔴 ฿ {x:,.0f}"
-                )
-                formatted_df["ผลตอบแทน (%)"] = formatted_df["ผลตอบแทน (%)"].apply(
-                    lambda x: f"🟢 +{x:,.2f}%" if x > 0 else f"🔴 {x:,.2f}%"
-                )
-                formatted_df["Max Drawdown"] = formatted_df["Max Drawdown"].apply(
-                    lambda x: f"⚠️ {x:,.2f}%" if x < -20 else f"{x:,.2f}%"
-                )
-                
-                # เรียงลำดับตามเปอร์เซ็นต์ผลตอบแทน
-                formatted_df = formatted_df.sort_values(by="ผลตอบแทน (%)", ascending=False)
-                
-                st.dataframe(formatted_df, use_container_width=True, hide_index=True)
-                st.caption("แหล่งข้อมูลอ้างอิง: ข้อมูลราคาปิดรายวันจาก **Yahoo Finance** ถูกนำมาแปลงเป็นความถี่รายเดือนเพื่อความแม่นยำในการคำนวณ DCA | โปรแกรมนี้จำลองผลตอบแทนโดยตัดตัวแปรด้านความผันผวนของอัตราแลกเปลี่ยน (FX Rate) ออก")
-
-        # --- Tab 2: Export Data ---
-        with tab2:
-            st.subheader("💾 ตารางข้อมูลดิบ (Raw Data) และส่งออกไฟล์")
-            st.markdown("ข้อมูลด้านล่างแสดง **มูลค่าพอร์ต (Portfolio Value)** ในแต่ละเดือน สามารถดาวน์โหลดไปวิเคราะห์ต่อใน Excel ได้")
+        
+        # ==========================================
+        # TAB 1: Historical Performance
+        # ==========================================
+        with tab_hist:
+            if baseline_x is not None:
+                fig_hist.add_trace(go.Scatter(x=baseline_x, y=baseline_y, mode='lines', name='เงินต้น (Cash)', line=dict(color='white', dash='dot')))
             
-            if raw_data_dict:
-                export_df = pd.DataFrame(raw_data_dict)
-                if baseline_x is not None:
-                    export_df['Total Cash Invested'] = baseline_y.values
-                
-                export_df.index = export_df.index.strftime('%Y-%m')
-                export_df = export_df.round(2)
-                
-                st.dataframe(export_df, use_container_width=True)
-                
-                csv_data = export_df.to_csv().encode('utf-8')
-                st.download_button(
-                    label="⬇️ Download CSV Data",
-                    data=csv_data,
-                    file_name=f'ultimate_dca_export_{years}yrs.csv',
-                    mime='text/csv',
-                )
+            fig_hist.update_layout(title="Historical Portfolio Value", template="plotly_dark", hovermode="x unified", height=500)
+            st.plotly_chart(fig_hist, use_container_width=True)
+            
+            # โชว์ Metric Cards สุดเท่สำหรับตัวที่ผลตอบแทนสูงสุด
+            if results:
+                best_asset = max(results, key=lambda x: x['ROI (%)'])
+                col1, col2, col3 = st.columns(3)
+                col1.markdown(f'<div class="metric-card"><div class="metric-title">🏆 Top Performer</div><div class="metric-value">{best_asset["Asset"].split()[1]}</div></div>', unsafe_allow_html=True)
+                col2.markdown(f'<div class="metric-card"><div class="metric-title">💰 Max Value</div><div class="metric-value green-text">฿ {best_asset["Value"]:,.0f}</div></div>', unsafe_allow_html=True)
+                col3.markdown(f'<div class="metric-card"><div class="metric-title">📈 Total ROI</div><div class="metric-value green-text">+{best_asset["ROI (%)"]:,.1f}%</div></div>', unsafe_allow_html=True)
+                st.write("")
 
+        # ==========================================
+        # TAB 2: Advanced Metrics (Institutional Grade)
+        # ==========================================
+        with tab_metrics:
+            st.subheader("Deep Financial Analysis")
+            df_res = pd.DataFrame(results)
+            
+            # Formatting
+            df_format = df_res.copy()
+            df_format['Invested'] = df_format['Invested'].apply(lambda x: f"฿{x:,.0f}")
+            df_format['Value'] = df_format['Value'].apply(lambda x: f"฿{x:,.0f}")
+            df_format['ROI (%)'] = df_format['ROI (%)'].apply(lambda x: f"{x:+.2f}%")
+            df_format['CAGR (%)'] = df_format['CAGR (%)'].apply(lambda x: f"{x:.2f}%")
+            df_format['Volatility (%)'] = df_format['Volatility (%)'].apply(lambda x: f"{x:.2f}%")
+            df_format['Sharpe Ratio'] = df_format['Sharpe Ratio'].apply(lambda x: f"{x:.2f}")
+            df_format['Max Drawdown (%)'] = df_format['Max Drawdown (%)'].apply(lambda x: f"{x:.2f}%")
+            
+            st.dataframe(df_format, use_container_width=True, hide_index=True)
+            
+            with st.expander("📚 อธิบายความหมายของตัวชี้วัด (Metrics Explanation)"):
+                st.markdown("""
+                * **CAGR:** อัตราการเติบโตเฉลี่ยทบต้นต่อปี (บอกว่าพอร์ตโตเฉลี่ยปีละกี่เปอร์เซ็นต์)
+                * **Volatility:** ความผันผวนของราคา (ยิ่งสูง ยิ่งสวิงแรง)
+                * **Sharpe Ratio:** ประสิทธิภาพในการบริหารความเสี่ยง (ยิ่งสูงยิ่งดี ควร > 1.0)
+                * **Max Drawdown:** ช่วงที่ขาดทุนหนักที่สุดจากจุดสูงสุด (วัดว่าทนความเจ็บปวดได้แค่ไหน)
+                """)
+
+        # ==========================================
+        # TAB 3: Monte Carlo Future Simulation
+        # ==========================================
+        with tab_future:
+            st.subheader("🔮 10-Year Future Projection (Monte Carlo)")
+            st.write("จำลองอนาคต 10 ปีข้างหน้า ด้วยการสุ่มทิศทางตลาด 50 รูปแบบ (อ้างอิงจากความผันผวนในอดีตของแต่ละสินทรัพย์)")
+            
+            if len(selected_assets) > 0:
+                target = st.selectbox("เลือกสินทรัพย์เพื่อจำลองอนาคต:", selected_assets)
+                target_data = next(item for item in results if item["Asset"] == target)
+                
+                # ดึง Volatility และ CAGR รายเดือนมาจำลอง
+                mu = (target_data['CAGR (%)'] / 100) / 12
+                vol = (target_data['Volatility (%)'] / 100) / np.sqrt(12)
+                
+                months_future = 12 * 10 # 10 years
+                simulations = 50
+                last_value = target_data['Value']
+                
+                sim_results = np.zeros((months_future, simulations))
+                sim_results[0] = last_value
+                
+                for t in range(1, months_future):
+                    random_shocks = np.random.normal(mu, vol, simulations)
+                    # จำลองการเติบโต + เงินลงทุน DCA เพิ่มเข้าไปทุกเดือน
+                    sim_results[t] = sim_results[t-1] * (1 + random_shocks) + monthly_invest
+                
+                fig_mc = go.Figure()
+                for i in range(simulations):
+                    fig_mc.add_trace(go.Scatter(y=sim_results[:, i], mode='lines', line=dict(color='rgba(0,180,216,0.1)'), showlegend=False))
+                
+                # เพิ่มเส้นค่าเฉลี่ย
+                fig_mc.add_trace(go.Scatter(y=np.mean(sim_results, axis=1), mode='lines', name='Expected Average', line=dict(color='yellow', width=3)))
+                
+                fig_mc.update_layout(title=f"จำลองอนาคต 10 ปีของ {target}", xaxis_title="เดือนที่ (Months)", yaxis_title="มูลค่าพอร์ต (THB)", template="plotly_dark")
+                st.plotly_chart(fig_mc, use_container_width=True)
+
+        # ==========================================
+        # TAB 4: Raw Data & Export
+        # ==========================================
+        with tab_data:
+            if raw_dict:
+                export_df = pd.DataFrame(raw_dict)
+                export_df.index = export_df.index.strftime('%Y-%m')
+                st.dataframe(export_df)
+                st.download_button("💾 Download CSV", export_df.to_csv().encode('utf-8'), "pro_dca_data.csv", "text/csv")
 else:
-    st.info("👈 พิมพ์ค้นหาและเลือกสินทรัพย์ที่ต้องการเปรียบเทียบจากแถบด้านซ้ายมือได้เลยครับ")
+    st.info("👈 Please select assets from the sidebar to begin analysis.")
